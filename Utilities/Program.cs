@@ -2,21 +2,18 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using CommandLine;
 using Newtonsoft.Json;
-using Serilog;  
-using Utilities;
+using Serilog;
 
 var config = new Dictionary<string, string>();
 AmazonS3Client client;
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
     .CreateLogger();
 var Logger = Log.ForContext<Program>();
 
-Parser.Default.ParseArguments<UploadOptions, CreateIndexOptions, ListOptions, MapOptions, ReflectOptions>(args)
+Parser.Default.ParseArguments<UploadOptions, CreateIndexOptions, ListOptions, ReflectOptions>(args)
   .WithParsed<UploadOptions>(opts => { SetupEnv(opts); UploadFiles(opts).Wait(); })
   .WithParsed<CreateIndexOptions>(opts => { SetupEnv(opts); CreateIndex(opts).Wait(); })
   .WithParsed<ListOptions>(opts => { SetupEnv(opts); ListFiles(opts).Wait(); })
-  .WithParsed<MapOptions>(opts => { SetupEnv(opts); MapHelper.Run(opts).Wait(); })
   .WithParsed<ReflectOptions>(opts => { ReflectAssembly(opts); });
 
 void ReflectAssembly(ReflectOptions opts)
