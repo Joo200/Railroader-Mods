@@ -203,25 +203,41 @@ public class PaxStationComponent : IndustryComponent, ICustomIndustryComponent, 
       }
 
       if (!branch.stations.Exists(station => station.code == TimetableCode)) {
-        logger.Information("PaxStop {name} does not exists in TimetableCode, creating.", name);
+        logger.Information("PaxStop {name} does not exists in TimetableCode, creating.", name.Replace(" Station", "").Replace(" Depot", ""));
         var station = new TimetableStation
         {
           passengerStop = paxStop,
           code = TimetableCode,
-          name = name,
+          name = paxStop.TimetableName,
           junctionType = junctionType,
           traverseTimeToNext = branchDefinition.TraverseTimeToNext,
           mapFeature = GetMapFeature(branchDefinition.MapFeature)
         };
-        branch.stations.Add(station);
-        branch.stations.Sort((a, b) =>
-          (a.passengerStop?.transform.GetComponentInParent<Area>().transform.GetSiblingIndex() ?? int.MaxValue) -
-          (b.passengerStop?.transform.GetComponentInParent<Area>().transform.GetSiblingIndex() ?? int.MaxValue));
+        var stations = new List<TimetableStation> { station };
+        foreach (var betweenStation in branchDefinition.Intermediates)
+        {
+          stations.Add(new TimetableStation{
+            passengerStop = null,
+            code = betweenStation.Value.Code,
+            name = betweenStation.Key,
+            junctionType = TimetableStation.JunctionType.None,
+            traverseTimeToNext = betweenStation.Value.TraverseTimeToNext,
+            mapFeature = GetMapFeature(branchDefinition.MapFeature)
+          });
+        }
+        
+        var newIndex = branch.stations.FindIndex(s =>
+          (s.passengerStop?.transform.GetComponentInParent<Area>()?.transform.GetSiblingIndex() ?? int.MaxValue) >
+          (paxStop.transform.GetComponentInParent<Area>()?.transform.GetSiblingIndex() ?? int.MaxValue));
+        if (newIndex == -1)
+          branch.stations.AddRange(stations);
+        else
+          branch.stations.InsertRange(newIndex, stations);
       } else {
         logger.Information("PaxStop {name} exists in TimetableCode, updating.", name);
         TimetableStation station = branch.stations.First(station => station.code == TimetableCode);
         station.code = TimetableCode;
-        station.name = name;
+        station.name = paxStop.TimetableName;
         station.passengerStop = paxStop;
         station.junctionType = junctionType;
         if (branchDefinition.TraverseTimeToNext != 0) station.traverseTimeToNext = branchDefinition.TraverseTimeToNext;
@@ -249,10 +265,18 @@ public class PaxStationComponent : IndustryComponent, ICustomIndustryComponent, 
   {
   }
 
+  public class IntermediateStation
+  {
+    public string Code { get; set; } = "";
+    public int TraverseTimeToNext { get; set; } = 0;
+  }
+
   public class BranchDefinition
   {
     public string Branch { get; set; }
     public int TraverseTimeToNext { get; set; }
     public string MapFeature { get; set; } = null;
+
+    public Dictionary<string, IntermediateStation> Intermediates { get; set; } = new();
   }
 }
