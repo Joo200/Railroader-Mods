@@ -23,10 +23,26 @@ Industry:
               "PAN_Test_Mod_00"
             ],
             // Which branch this stations belongs to:
-            "branch": "Main",
-            // List of ids of other passenger stations.
-            // Unsure of exact impact
-            "neighborIds": [],
+            "branches": [
+              {
+                // Important: Always use the main branch / major branch first. Order matters!
+                "branch": "Main",
+                "traverseTimeToNext": 600
+              },
+              {
+                "branch": "Macon County",
+                "traverseTimeToNext": 120, // Traverse time to the next station (east to west)
+                "Intermediates": { // Intermediate stations for sidings without a stop
+                  "Welch": {
+                    "traverseTimeToNext": 540, // Traverse time to the next station (east to west) 
+                    "name": "Welch", // Name of the intermediate station
+                    "Code": "WL" // Code of the intermediate station
+                  }
+                }
+              }
+            ],
+            // List of ids of other passenger stations used for internal calculations (timetable code or identifier)
+            "neighborIds": ["BR, EL"],
             "carTypeFilter": "*",
             "sharedStorage": true
           }
