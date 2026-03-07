@@ -47,7 +47,7 @@ public class SerializedSection : SerializedComponentBase<Section>,
     section.identifier = id;
     
     // Register in cache
-    SectionCache.Instance[id] = section;
+    SectionCache.Instance[SectionCache.GetSectionIdentifier(section)] = section;
     
     // Apply configuration
     Write(section);
@@ -59,7 +59,7 @@ public class SerializedSection : SerializedComponentBase<Section>,
   {
     section.displayName = DisplayName;
     section.description = Description;
-    section.prerequisiteSections = DefinitionUtils.ApplyList(section.prerequisiteSections ?? [], PrerequisiteSections);
+    section.prerequisiteSections = DefinitionUtils.ApplyList(section, section.prerequisiteSections ?? [], PrerequisiteSections);
     section.disableFeaturesOnUnlock = DefinitionUtils.ApplyList(section.disableFeaturesOnUnlock ?? [], DisableFeaturesOnUnlock);
     section.enableFeaturesOnUnlock = DefinitionUtils.ApplyList(section.enableFeaturesOnUnlock ?? [], EnableFeaturesOnUnlock);
     section.enableFeaturesOnAvailable = DefinitionUtils.ApplyList(section.enableFeaturesOnAvailable ?? [], EnableFeaturesOnAvailable);
@@ -82,13 +82,18 @@ public class SerializedSection : SerializedComponentBase<Section>,
     EnableFeaturesOnAvailable = section.enableFeaturesOnAvailable.ToDictionary(f => f.identifier, f => true);
   }
 
-  public void Destroy(Section section)
+  public static void DestroySection(Section section)
   {
     // Remove from cache
-    SectionCache.Instance.Remove(section.identifier);
+    SectionCache.Instance.Remove(SectionCache.GetSectionIdentifier(section));
     
     // Destroy GameObject
     GameObject.Destroy(section.gameObject);
+  }
+
+  public void Destroy(Section section)
+  {
+    DestroySection(section);
   }
 
   internal void ApplyTo(Section section)

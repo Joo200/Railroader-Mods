@@ -47,12 +47,12 @@ public class DefinitionUtils
     return items.ToArray();
   }
 
-  public static Section[] ApplyList(Section[] sections, Dictionary<string, bool> dict, Dictionary<string, Section> cached = null)
+  public static Section[] ApplyList(Section parent, Section[] sections, Dictionary<string, bool> dict, Dictionary<string, Section> cached = null)
   {
-        cached ??= SectionCache.Instance;
-        var items = sections.ToDictionary(s => s.identifier, s => s);
+    cached ??= SectionCache.Instance;
+    var items = sections.ToDictionary(SectionCache.GetSectionIdentifier, s => s);
     foreach (var pair in dict) {
-      var identifier = pair.Key;
+      var identifier = SectionCache.GetSectionIdentifier(parent.GetComponentInParent<Progression>().identifier, pair.Key);
       var val = pair.Value;
       if (val) {
         if (!items.ContainsKey(identifier)) {

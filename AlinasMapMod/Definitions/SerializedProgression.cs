@@ -12,6 +12,7 @@ public class SerializedProgression : SerializedComponentBase<Progression>,
   ICreatableComponent<Progression>,
   IDestroyableComponent<Progression>
 {
+  public string BaseProgression;
   public Dictionary<string, SerializedSection> Sections { get; set; } = new Dictionary<string, SerializedSection>();
 
   public SerializedProgression()
@@ -107,19 +108,32 @@ public class SerializedProgression : SerializedComponentBase<Progression>,
 
   public override void Write(Progression progression)
   {
+    // Find all existing sections in this progression instance
     foreach (var pair in Sections) {
       var identifier = pair.Key;
       var section = pair.Value;
       Log.Information("Patching section {id}", identifier);
-      if (!SectionCache.Instance.TryGetValue(identifier, out var sec)) {
-        Log.Information("Adding section {id}", identifier);
+
+      if (SectionCache.Instance.TryGetValue(SectionCache.GetSectionIdentifier(progression.identifier, identifier), out var sec)) {
+        if (section == null) {
+          SerializedSection.DestroySection(sec);
+          Log.Error("Deleting section {id}", identifier);
+          continue;
+        }
+        
+        section.Write(sec);
+      } else if (section != null) {
         var go = new GameObject(identifier);
         go.transform.SetParent(progression.transform);
         sec = go.AddComponent<Section>();
         sec.identifier = identifier;
-        SectionCache.Instance.Add(identifier, sec);
+        
+        Log.Information("Adding section {id}", identifier);
+        // Also add to global cache if not present (or update it if it's new)
+        SectionCache.Instance[SectionCache.GetSectionIdentifier(sec)] = sec;
+        
+        section.Write(sec);
       }
-      section.Write(sec); // Use new Write method
     }
   }
 
