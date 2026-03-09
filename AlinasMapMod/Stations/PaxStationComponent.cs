@@ -225,10 +225,9 @@ public class PaxStationComponent : IndustryComponent, ICustomIndustryComponent, 
             mapFeature = GetMapFeature(branchDefinition.MapFeature)
           });
         }
-        
+        var areaIndex = Industry.GetComponentInParent<Area>()?.transform.GetSiblingIndex() ?? int.MaxValue;
         var newIndex = branch.stations.FindIndex(s =>
-          (s.passengerStop?.transform.GetComponentInParent<Area>()?.transform.GetSiblingIndex() ?? int.MaxValue) >
-          (paxStop.transform.GetComponentInParent<Area>()?.transform.GetSiblingIndex() ?? int.MaxValue));
+          (s.passengerStop?.GetComponentInParent<Area>()?.transform.GetSiblingIndex() ?? int.MinValue) > areaIndex);
         if (newIndex == -1)
           branch.stations.AddRange(stations);
         else
