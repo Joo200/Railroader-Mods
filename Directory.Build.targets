@@ -105,17 +105,4 @@
 	<MakeDir Directories="$(GamePluginDir)" Condition="'$(IsPlugin)' == 'true'" />
 	<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(GamePluginDir)" Condition="'$(IsPlugin)' == 'true'"/>  
   </Target>
-  <Target
-    Name="PublishMod"
-    AfterTargets="PackageMod"
-    Condition="'$(Configuration)' == 'Release' AND '$(PublishMod)' == 'true'"
-  >
-    <Message Text="Publishing $(AssemblyName) v$(AssemblyVersion)" Importance="high" />
-    <!-- Publish to GitHub -->
-    <Exec Command="dotnet &quot;$(MSBuildThisFileDirectory)Utilities/bin/Release/Utilities.dll&quot; upload --prefix railroader-mods $(ZipName) @(ExtraZips, ' ')" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" />
-    <Exec Command="&quot;$(MSBuildThisFileDirectory)Utilities/bin/Release/Utilities.exe&quot; upload --prefix railroader-mods $(ZipName) @(ExtraZips, ' ')" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-  </Target>
-  <Target Name="OldPublishMod" Condition="false">
-    <Exec Command="gh release create v$(AssemblyVersion) --generate-notes $(ZipName) @(ExtraZips, ' ')" />
-  </Target>
 </Project>
