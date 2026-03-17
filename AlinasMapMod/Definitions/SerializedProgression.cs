@@ -13,6 +13,7 @@ public class SerializedProgression : SerializedComponentBase<Progression>,
   IDestroyableComponent<Progression>
 {
   public string BaseProgression;
+  public string FallbackSection;
   public Dictionary<string, SerializedSection> Sections { get; set; } = new Dictionary<string, SerializedSection>();
 
   public SerializedProgression()
@@ -134,6 +135,66 @@ public class SerializedProgression : SerializedComponentBase<Progression>,
         
         section.Write(sec);
       }
+    }
+
+    if (FallbackSection != null) {
+      if (SectionCache.Instance.TryGetValue(SectionCache.GetSectionIdentifier(progression.identifier, FallbackSection),
+            out var sec)) {
+        foreach (Section section in progression.GetComponentsInChildren<Section>())
+        {
+          if (Sections.ContainsKey(section.identifier))
+            continue;
+          if (section.prerequisiteSections.Length > 0)
+            continue;
+          Log.Information("Adding section {id} as fallback for legacy old section {old}", FallbackSection, section.identifier);
+          section.prerequisiteSections = [sec];
+        }
+      }
+    }
+    
+    // Since Section.Configure uses GetComponentsInChildren<Section>(), we reorder GameObjects in the Transform hierarchy.
+    var sectionComponents = progression.GetComponentsInChildren<Section>(true);
+    var sectionList = sectionComponents.ToList();
+    var orderedList = new List<Section>();
+    var remaining = new List<Section>(sectionList);
+
+    // Sort based on prerequisiteSections.
+    // Prerequisites must come before the section that depends on them.
+    bool changed = true;
+    while (remaining.Count > 0 && changed) {
+      changed = false;
+      for (int i = 0; i < remaining.Count; i++) {
+        var s = remaining[i];
+        
+        // Check if all prerequisites of s are already in orderedList or NOT in this progression at all
+        // (prerequisites could be in a different progression, though usually they are in the same one).
+        // If a prerequisite is still in 'remaining', we cannot add 's' yet.
+        bool allPrerequisitesSatisfied = true;
+        if (s.prerequisiteSections != null) {
+          foreach (var prereq in s.prerequisiteSections) {
+            if (prereq == null) continue;
+            if (remaining.Contains(prereq)) {
+              allPrerequisitesSatisfied = false;
+              break;
+            }
+          }
+        }
+
+        if (allPrerequisitesSatisfied) {
+          orderedList.Add(s);
+          remaining.RemoveAt(i);
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    // Add any leftovers (could be cycles or missing references)
+    orderedList.AddRange(remaining);
+
+    // Apply the order to the Transform hierarchy
+    for (int i = 0; i < orderedList.Count; i++) {
+      orderedList[i].transform.SetSiblingIndex(i);
     }
   }
 

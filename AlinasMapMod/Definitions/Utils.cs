@@ -76,11 +76,14 @@ public class DefinitionUtils
     foreach (var pair in dict) {
       var identifier = pair.Key;
       var val = pair.Value;
-      if (val && !items.ContainsKey(identifier)) {
-        if (cached.TryGetValue(identifier, out var item)) {
-          items.Add(identifier, item);
+      if (val) {
+        if (!items.ContainsKey(identifier)) {
+          if (cached.TryGetValue(identifier, out var item)) {
+            items.Add(identifier, item);
+          } else {
+            Log.Warning("MapFeature not found: {id}", identifier);
+          }
         } else {
-          Log.Warning("MapFeature not found: {id}", identifier);
         }
       } else {
         items.Remove(identifier);

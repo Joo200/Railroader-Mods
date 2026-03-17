@@ -89,8 +89,6 @@ public class OldPatcher
             continue;
           }
         }
-
-        Log.Information("Patching MapFeature {id}", identifier);
       } catch (Exception e) {
         Log.Error(e, "Failed to patch map features for {feature}", pair.Key);
       }
