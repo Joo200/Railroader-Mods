@@ -156,7 +156,6 @@ public class PaxStationComponent : IndustryComponent, ICustomIndustryComponent, 
     paxStop.passengerLoad = Load;
     paxStop.basePopulation = BasePopulation;
     paxStop.timetableCode = TimetableCode;
-    paxStop.ProgressionDisabled = ProgressionDisabled;
     paxStop.neighbors = FindObjectsOfType<PassengerStop>(true).Where(stop => NeighborIds.Contains(stop.timetableCode) || NeighborIds.Contains(stop.identifier)).ToArray();
 
     SetupTimetable(paxStop);
